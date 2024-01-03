@@ -66,12 +66,18 @@ public class AwsService {
         String accessKeyId = "AKIA2NMGUGDKLAB7CWP2";
         String secretAccessKey = "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";
         TextractClient textractClient = TextractClient.builder().region(region).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
+        QueriesConfig queryConfig = QueriesConfig.builder()
+                .queries(
+                        Query.builder().text("Find the invoice total").build(),
+                        Query.builder().text("What is the customer name?").build()
+                )
+                .build();
         try (InputStream inputStream = new FileInputStream(filePath)) {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(
                     AnalyzeDocumentRequest.builder()
                             .document(document)
-                            .featureTypes(FeatureType.QUERIES)
+                            .featureTypes(FeatureType.QUERIES).queriesConfig(queryConfig)
                             .build());
             System.out.println(response);
         } catch (IOException e) {
