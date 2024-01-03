@@ -16,9 +16,23 @@ public class AwsController {
         this.awsService = awsService;
     }
 
-    @GetMapping("/awsTextExtractor")
+    @GetMapping("/awsSignatureExtractor")
     public void awsTextractor (@RequestParam String filePath) {
-        awsService.textExtractor(filePath);
-//        return new ResponseEntity<>(awsService.textExtractor(filePath), HttpStatus.OK);
+        awsService.signatureExtractor(filePath);
+    }
+
+    @GetMapping("/awsTableExtractor")
+    public void tableExtractor (@RequestParam String filePath) {
+        awsService.tableExtractor(filePath);
+    }
+
+    @GetMapping("/awsFormExtractor")
+    public void formExtractor (@RequestParam String filePath) {
+        awsService.formExtractor(filePath);
+    }
+
+    @GetMapping("/awsQueryExtractor")
+    public void QueryExtractor (@RequestParam String filePath) {
+        awsService.queryExtractor(filePath);
     }
 }
