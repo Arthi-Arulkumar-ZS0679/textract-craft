@@ -1,7 +1,6 @@
 package com.example.demo.service;
 
 import com.example.demo.config.ApplicationConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -25,7 +24,6 @@ import java.util.List;
 public class AwsService {
 
     private final ApplicationConfig applicationConfig;
-    private final ObjectMapper objectMapper;
     private static final Logger logger = LoggerFactory.getLogger(ApplicationConfig.class);
 
     public AnalyzeDocumentResponse signatureExtractor(String filePath) throws RuntimeException{
