@@ -1,5 +1,9 @@
 package com.example.demo.service;
 
+import com.example.demo.config.ApplicationConfig;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -11,77 +15,95 @@ import software.amazon.awssdk.services.textract.model.*;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+@Slf4j
 @Service
 public class AwsService {
 
-    public void signatureExtractor(String filePath) {
-        Region region = Region.US_WEST_2;
-        String accessKeyId = "AKIA2NMGUGDKLAB7CWP2";
-        String secretAccessKey = "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";
+    private final ApplicationConfig applicationConfig;
+
+    private static Logger logger;
+
+    @Autowired
+    public AwsService(ApplicationConfig applicationConfig) {
+        this.applicationConfig = applicationConfig;
+    }
+
+    public AnalyzeDocumentResponse signatureExtractor(String filePath) throws RuntimeException{
+        Region region = applicationConfig.getAwsRegion();
+        String accessKeyId = applicationConfig.getAwsAccessKeyId();
+        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
         TextractClient textractClient = TextractClient.builder().region(region).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
         try (InputStream inputStream = new FileInputStream(filePath)) {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.SIGNATURES).build());
-            System.out.println(response);
+            logger.info("Signature extraction completed {}", response);
+            return response;
         } catch (IOException e) {
-            System.err.println(e.getMessage());
+            logger.error("An runtime exception occurred in signature extraction {}", e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
-    public void tableExtractor(String filePath) {
-        Region region = Region.US_WEST_2;
-        String accessKeyId = "AKIA2NMGUGDKLAB7CWP2";
-        String secretAccessKey = "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";
+    public AnalyzeDocumentResponse tableExtractor(String filePath) throws RuntimeException{
+        Region region = applicationConfig.getAwsRegion();
+        String accessKeyId = applicationConfig.getAwsAccessKeyId();
+        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
         TextractClient textractClient = TextractClient.builder().region(region).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
         try (InputStream inputStream = new FileInputStream(filePath)) {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.TABLES).build());
-            System.out.println(response);
+            logger.info("Table extraction completed {}", response);
+            return response;
         } catch (IOException e) {
-            System.err.println(e.getMessage());
+            logger.error("An runtime exception occurred in table extraction {}", e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
-    public void formExtractor(String filePath) {
-        Region region = Region.US_WEST_2;
-        String accessKeyId = "AKIA2NMGUGDKLAB7CWP2";
-        String secretAccessKey = "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";
+    public AnalyzeDocumentResponse formExtractor(String filePath) throws RuntimeException {
+        Region region = applicationConfig.getAwsRegion();
+        String accessKeyId = applicationConfig.getAwsAccessKeyId();
+        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
         TextractClient textractClient = TextractClient.builder().region(region).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
         try (InputStream inputStream = new FileInputStream(filePath)) {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.FORMS).build());
-            System.out.println(response);
+            logger.info("Form extraction completed {}", response);
+            return response;
         } catch (IOException e) {
-            System.err.println(e.getMessage());
+            logger.error("An runtime exception occurred in form extraction {}", e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
-    public void queryExtractor(String filePath) {
-        Region region = Region.US_WEST_2;
-        String accessKeyId = "AKIA2NMGUGDKLAB7CWP2";
-        String secretAccessKey = "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";
-        TextractClient textractClient = TextractClient.builder().region(region).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
-        QueriesConfig queryConfig = QueriesConfig.builder()
-                .queries(
-                        Query.builder().text("Find the invoice total").build(),
-                        Query.builder().text("What is the customer name?").build()
-                )
+    public AnalyzeDocumentResponse queryExtractor(String filePath, List<Query> queries) throws RuntimeException {
+        Region region = applicationConfig.getAwsRegion();
+        String accessKeyId = applicationConfig.getAwsAccessKeyId();
+        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
+        TextractClient textractClient = TextractClient.builder()
+                .region(region)
+                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
                 .build();
+
+        QueriesConfig queryConfig = QueriesConfig.builder()
+                .queries(queries)
+                .build();
+
         try (InputStream inputStream = new FileInputStream(filePath)) {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(
                     AnalyzeDocumentRequest.builder()
                             .document(document)
-                            .featureTypes(FeatureType.QUERIES).queriesConfig(queryConfig)
+                            .featureTypes(FeatureType.QUERIES)
+                            .queriesConfig(queryConfig)
                             .build());
-            System.out.println(response);
+            logger.info("Query extraction completed {}", response);
+            return response;
         } catch (IOException e) {
-            System.err.println(e.getMessage());
+            logger.error("An runtime exception occurred in query extraction {}", e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 }
