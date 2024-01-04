@@ -40,7 +40,8 @@ public class AwsService {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(
                     AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.SIGNATURES).build());
-            return jsonBuilder.buildJson(response.blocks());
+            logger.info("\n*********************Table Extraction***********************\n {}", response);
+            return jsonBuilder.buildJson(response.blocks(), BlockType.SIGNATURE);
         } catch (IOException e) {
             logger.error("Runtime exception occurred in signature extraction {}", e.getMessage());
             throw new RuntimeException(e);
@@ -48,7 +49,7 @@ public class AwsService {
     }
 
 
-    public AnalyzeDocumentResponse tableExtractor(String filePath) throws RuntimeException{
+    public String tableExtractor(String filePath) throws RuntimeException{
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
@@ -57,14 +58,14 @@ public class AwsService {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.TABLES).build());
             logger.info("\n*********************Table Extraction***********************\n {}", response);
-            return response;
+            return jsonBuilder.buildJson(response.blocks(), BlockType.TABLE);
         } catch (IOException e) {
             logger.error("Runtime exception occurred in table extraction {}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
-    public AnalyzeDocumentResponse formExtractor(String filePath) throws RuntimeException {
+    public String formExtractor(String filePath) throws RuntimeException {
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
@@ -73,14 +74,14 @@ public class AwsService {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.FORMS).build());
             logger.info("\n*********************Form Extraction***********************\n {}", response);
-            return response;
+            return jsonBuilder.buildJson(response.blocks(), BlockType.LINE);
         } catch (IOException e) {
             logger.error("Runtime exception occurred in form extraction {}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
-    public AnalyzeDocumentResponse queryExtractor(String filePath, List<Query> queries) throws RuntimeException {
+    public String queryExtractor(String filePath, List<Query> queries) throws RuntimeException {
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
@@ -102,7 +103,7 @@ public class AwsService {
                             .queriesConfig(queryConfig)
                             .build());
             logger.info("\n*********************Query Extraction***********************\n {}", response);
-            return response;
+            return jsonBuilder.buildJson(response.blocks(), BlockType.QUERY_RESULT);
         } catch (IOException e) {
             logger.error("Runtime exception occurred in query extraction {}", e.getMessage());
             throw new RuntimeException(e);

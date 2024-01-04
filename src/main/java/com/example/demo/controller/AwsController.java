@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import software.amazon.awssdk.services.textract.model.AnalyzeDocumentResponse;
 import software.amazon.awssdk.services.textract.model.Query;
 
 import java.util.List;
@@ -34,9 +33,9 @@ public class AwsController {
     }
 
     @GetMapping("/awsTableExtractor")
-    public ResponseEntity<AnalyzeDocumentResponse> tableExtractor(@RequestParam String filePath) {
+    public ResponseEntity<String> tableExtractor(@RequestParam String filePath) {
         try {
-            AnalyzeDocumentResponse response = awsService.tableExtractor(filePath);
+            String response = awsService.tableExtractor(filePath);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -44,9 +43,9 @@ public class AwsController {
     }
 
     @GetMapping("/awsFormExtractor")
-    public ResponseEntity<AnalyzeDocumentResponse> formExtractor(@RequestParam String filePath) {
+    public ResponseEntity<String> formExtractor(@RequestParam String filePath) {
         try {
-            AnalyzeDocumentResponse response = awsService.formExtractor(filePath);
+            String response = awsService.formExtractor(filePath);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -54,7 +53,7 @@ public class AwsController {
     }
 
     @GetMapping("/awsQueryExtractor")
-    public ResponseEntity<AnalyzeDocumentResponse> queryExtractor(
+    public ResponseEntity<String> queryExtractor(
             @RequestParam String filePath,
             @RequestParam List<String> queryTexts
     ) {
@@ -63,7 +62,7 @@ public class AwsController {
                     .map(queryText -> Query.builder().text(queryText).build())
                     .collect(Collectors.toList());
 
-            AnalyzeDocumentResponse response = awsService.queryExtractor(filePath, queries);
+            String response = awsService.queryExtractor(filePath, queries);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());

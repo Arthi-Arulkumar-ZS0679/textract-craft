@@ -13,11 +13,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class JsonBuilder {
     private String jsonResponse = null;
 
-    public String buildJson(List<Block> allBlocks) {
+    public String buildJson(List<Block> allBlocks, BlockType signature) {
         ObjectMapper objectMapper = new ObjectMapper();
 
         // Register custom serializer for Geometry class
@@ -26,19 +27,18 @@ public class JsonBuilder {
         objectMapper.registerModule(module);
 
         List<Object> jsonList = new ArrayList<>();
+        List<Block> blockList = allBlocks.stream().filter(block -> block.blockType().equals(signature)).toList();
 
-        for (Block block : allBlocks) {
+        for (Block block : blockList) {
+            Map<String, Object> signatureJson = buildSignatureJson(block);
             if (block.blockType() == BlockType.SIGNATURE) {
-                Map<String, Object> signatureJson = buildSignatureJson(block);
                 jsonList.add(signatureJson);
             } else if (block.blockType() == BlockType.TABLE) {
-                Map<String, Object> signatureJson = buildSignatureJson(block);
                 jsonList.add(signatureJson);
-            } else if (block.blockType() == BlockType.QUERY) {
-                Map<String, Object> signatureJson = buildSignatureJson(block);
+            } else if (block.blockType() == BlockType.QUERY || block.blockType() == BlockType.QUERY_RESULT) {
                 jsonList.add(signatureJson);
             } else {
-
+                jsonList.add(signatureJson);
             }
         }
 
@@ -58,6 +58,7 @@ public class JsonBuilder {
         signatureJson.put("BlockType", block.blockType().toString());
         signatureJson.put("Confidence", block.confidence());
         signatureJson.put("Geometry", block.geometry());
+        signatureJson.put("Answer", block.text());
         signatureJson.put("Id", block.id());
         return signatureJson;
     }
