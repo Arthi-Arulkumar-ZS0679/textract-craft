@@ -24,10 +24,10 @@ public class AwsController {
     }
 
     @GetMapping("/awsSignatureExtractor")
-    public ResponseEntity<Integer> awsSignatureExtractor(@RequestParam String filePath) {
+    public ResponseEntity<String> awsSignatureExtractor(@RequestParam String filePath) {
         try {
-            AnalyzeDocumentResponse response = awsService.signatureExtractor(filePath);
-            return ResponseEntity.ok(response.documentMetadata().pages());
+            String response = awsService.signatureExtractor(filePath);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
