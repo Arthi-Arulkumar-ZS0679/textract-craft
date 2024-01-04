@@ -1,9 +1,12 @@
 package com.example.demo.config;
 
+import lombok.Data;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.regions.Region;
 
+@Data
 @Configuration
 public class ApplicationConfig {
 
@@ -15,17 +18,5 @@ public class ApplicationConfig {
 
     @Value("${aws.secretAccessKey}")
     private String awsSecretAccessKey;
-
-    public Region getAwsRegion() {
-        return awsRegion;
-    }
-
-    public String getAwsAccessKeyId() {
-        return awsAccessKeyId;
-    }
-
-    public String getAwsSecretAccessKey() {
-        return awsSecretAccessKey;
-    }
 
 }

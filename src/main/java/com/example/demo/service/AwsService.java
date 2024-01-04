@@ -1,9 +1,11 @@
 package com.example.demo.service;
 
 import com.example.demo.config.ApplicationConfig;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -19,16 +21,12 @@ import java.util.List;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class AwsService {
 
     private final ApplicationConfig applicationConfig;
-
-    private static Logger logger;
-
-    @Autowired
-    public AwsService(ApplicationConfig applicationConfig) {
-        this.applicationConfig = applicationConfig;
-    }
+    private final ObjectMapper objectMapper;
+    private static final Logger logger = LoggerFactory.getLogger(ApplicationConfig.class);
 
     public AnalyzeDocumentResponse signatureExtractor(String filePath) throws RuntimeException{
         Region region = applicationConfig.getAwsRegion();
@@ -38,7 +36,7 @@ public class AwsService {
         try (InputStream inputStream = new FileInputStream(filePath)) {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.SIGNATURES).build());
-            logger.info("Signature extraction completed {}", response);
+            logger.info("\n*********************Signature Extraction***********************\n {}", response);
             return response;
         } catch (IOException e) {
             logger.error("An runtime exception occurred in signature extraction {}", e.getMessage());
@@ -54,7 +52,7 @@ public class AwsService {
         try (InputStream inputStream = new FileInputStream(filePath)) {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.TABLES).build());
-            logger.info("Table extraction completed {}", response);
+            logger.info("\n*********************Table Extraction***********************\n {}", response);
             return response;
         } catch (IOException e) {
             logger.error("An runtime exception occurred in table extraction {}", e.getMessage());
@@ -70,7 +68,7 @@ public class AwsService {
         try (InputStream inputStream = new FileInputStream(filePath)) {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.FORMS).build());
-            logger.info("Form extraction completed {}", response);
+            logger.info("\n*********************Form Extraction***********************\n {}", response);
             return response;
         } catch (IOException e) {
             logger.error("An runtime exception occurred in form extraction {}", e.getMessage());
@@ -99,7 +97,7 @@ public class AwsService {
                             .featureTypes(FeatureType.QUERIES)
                             .queriesConfig(queryConfig)
                             .build());
-            logger.info("Query extraction completed {}", response);
+            logger.info("\n*********************Query Extraction***********************\n {}", response);
             return response;
         } catch (IOException e) {
             logger.error("An runtime exception occurred in query extraction {}", e.getMessage());
