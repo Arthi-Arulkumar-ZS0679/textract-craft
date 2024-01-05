@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.service.AwsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,7 +23,7 @@ public class AwsController {
         this.awsService = awsService;
     }
 
-    @GetMapping("/awsSignatureExtractor")
+    @GetMapping(value = "/awsSignatureExtractor", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> awsSignatureExtractor(@RequestParam String filePath) {
         try {
             String response = awsService.signatureExtractor(filePath);
@@ -32,7 +33,7 @@ public class AwsController {
         }
     }
 
-    @GetMapping("/awsTableExtractor")
+    @GetMapping(value = "/awsTableExtractor", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> tableExtractor(@RequestParam String filePath) {
         try {
             String response = awsService.tableExtractor(filePath);
@@ -42,7 +43,7 @@ public class AwsController {
         }
     }
 
-    @GetMapping("/awsFormExtractor")
+    @GetMapping(value = "/awsFormExtractor", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> formExtractor(@RequestParam String filePath) {
         try {
             String response = awsService.formExtractor(filePath);
@@ -52,7 +53,7 @@ public class AwsController {
         }
     }
 
-    @GetMapping("/awsQueryExtractor")
+    @GetMapping(value = "/awsQueryExtractor", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> queryExtractor(
             @RequestParam String filePath,
             @RequestParam List<String> queryTexts

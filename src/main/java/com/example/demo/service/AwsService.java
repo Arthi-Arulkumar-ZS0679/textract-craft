@@ -11,16 +11,14 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.textract.TextractClient;
 import software.amazon.awssdk.services.textract.model.*;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.List;
 
 @Slf4j
@@ -115,7 +113,7 @@ public class AwsService {
         }
     }
 
-    public String uploadDocument(String filePath) {
+    public String uploadDocument(String filePath) throws RuntimeException{
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
@@ -133,7 +131,8 @@ public class AwsService {
                     .build();
             s3Client.putObject(putObjectRequest, documentFile.toPath());
         } catch (Exception e) {
-            return "Upload failed: " + e.getMessage();
+            logger.error("Runtime exception occurred {}", e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
         return "Upload successful!";
     }
