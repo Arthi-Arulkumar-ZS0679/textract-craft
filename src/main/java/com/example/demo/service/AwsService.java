@@ -17,6 +17,7 @@ import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.textract.TextractClient;
 import software.amazon.awssdk.services.textract.model.*;
@@ -26,7 +27,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.List;
 
 @Slf4j
@@ -139,12 +139,12 @@ public class AwsService {
                     .build();
             PutObjectResponse response = s3Client.putObject(putObjectRequest, documentFile.toPath());
             System.out.println(response);
-            String jsonResponse = String.format(
+            return String.format(
                     "{\"status\": \"success\", \"message\": \"Upload successful!\", \"eTag\": %s, \"bucket\": \"%s\", \"key\": \"%s\"}",
                     response.eTag(), bucketName, documentKeyName);
-            return jsonResponse;
         } catch (Exception e) {
-            return "Upload failed: " + e.getMessage();
+            logger.error("Runtime exception occurred {}", e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
     }
     public ResponseEntity<InputStreamResource> downloadDocument(String key) throws IOException {
@@ -177,7 +177,7 @@ public class AwsService {
 
         }
         catch (S3Exception e) {
-            e.printStackTrace();
+            logger.error("Runtime exception occurred {}", e.getMessage());
             return ResponseEntity.status(500).body(null);
         }
     }
