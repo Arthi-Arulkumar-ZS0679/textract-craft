@@ -18,4 +18,10 @@ public class ApplicationConfig {
     @Value("${aws.secretAccessKey}")
     private String awsSecretAccessKey;
 
+    @Value("${aws.bucketName}")
+    private String awsBucketName;
+
+    @Value("${aws.s3Location}")
+    private String awsS3uri;
+
 }

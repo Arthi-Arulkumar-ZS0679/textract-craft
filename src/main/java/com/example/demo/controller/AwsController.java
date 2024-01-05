@@ -68,4 +68,14 @@ public class AwsController {
             throw new RuntimeException(e.getMessage());
         }
     }
+
+    @GetMapping("/awsUpload")
+    public ResponseEntity<String> upload(@RequestParam String filePath) {
+        try {
+            String response = awsService.uploadDocument(filePath);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
 }

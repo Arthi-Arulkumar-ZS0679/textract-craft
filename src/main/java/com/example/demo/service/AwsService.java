@@ -10,12 +10,17 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.textract.TextractClient;
 import software.amazon.awssdk.services.textract.model.*;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.List;
 
 @Slf4j
@@ -49,7 +54,7 @@ public class AwsService {
     }
 
 
-    public String tableExtractor(String filePath) throws RuntimeException{
+    public String tableExtractor(String filePath) throws RuntimeException {
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
@@ -109,4 +114,28 @@ public class AwsService {
             throw new RuntimeException(e);
         }
     }
+
+    public String uploadDocument(String filePath) {
+        Region region = applicationConfig.getAwsRegion();
+        String accessKeyId = applicationConfig.getAwsAccessKeyId();
+        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
+        String bucketName = applicationConfig.getAwsBucketName();
+
+        try (S3Client s3Client = S3Client.builder()
+                .region(region)
+                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
+                .build()) {
+            File documentFile = new File(filePath);
+            String documentKeyName = documentFile.getName();
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(documentKeyName)
+                    .build();
+            s3Client.putObject(putObjectRequest, documentFile.toPath());
+        } catch (Exception e) {
+            return "Upload failed: " + e.getMessage();
+        }
+        return "Upload successful!";
+    }
+
 }
