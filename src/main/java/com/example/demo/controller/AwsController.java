@@ -2,11 +2,9 @@ package com.example.demo.controller;
 
 import com.example.demo.service.AwsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.textract.model.Query;
 
 import java.util.List;
@@ -69,11 +67,19 @@ public class AwsController {
         }
     }
 
-    @GetMapping("/awsUpload")
+    @PostMapping("/awsUpload")
     public ResponseEntity<String> upload(@RequestParam String filePath) {
         try {
             String response = awsService.uploadDocument(filePath);
             return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+    @GetMapping("/awsDownload")
+    public ResponseEntity<InputStreamResource> downloadDocument(@RequestParam String key) {
+        try {
+            return awsService.downloadDocument(key);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

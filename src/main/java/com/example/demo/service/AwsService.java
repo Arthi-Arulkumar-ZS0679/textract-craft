@@ -5,15 +5,21 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.textract.TextractClient;
 import software.amazon.awssdk.services.textract.model.*;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 
 import java.io.File;
@@ -131,11 +137,48 @@ public class AwsService {
                     .bucket(bucketName)
                     .key(documentKeyName)
                     .build();
-            s3Client.putObject(putObjectRequest, documentFile.toPath());
+            PutObjectResponse response = s3Client.putObject(putObjectRequest, documentFile.toPath());
+            System.out.println(response);
+            String jsonResponse = String.format(
+                    "{\"status\": \"success\", \"message\": \"Upload successful!\", \"eTag\": %s, \"bucket\": \"%s\", \"key\": \"%s\"}",
+                    response.eTag(), bucketName, documentKeyName);
+            return jsonResponse;
         } catch (Exception e) {
             return "Upload failed: " + e.getMessage();
         }
-        return "Upload successful!";
     }
+    public ResponseEntity<InputStreamResource> downloadDocument(String key) throws IOException {
+        String bucketName = applicationConfig.getAwsBucketName();
+        Region region = applicationConfig.getAwsRegion();
+        String accessKeyId = applicationConfig.getAwsAccessKeyId();
+        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
 
+        try (S3Client s3Client = S3Client.builder()
+                .region(region)
+                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
+                .build()) {
+
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .build();
+
+            ResponseBytes<GetObjectResponse> responseInputStream = s3Client.getObjectAsBytes(getObjectRequest);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDispositionFormData("attachment", key);
+
+            InputStreamResource inputStreamResource = new InputStreamResource(responseInputStream.asInputStream());
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(inputStreamResource);
+
+        }
+        catch (S3Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
+    }
 }
