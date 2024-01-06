@@ -1,26 +1,30 @@
 package com.example.demo.service;
 
 import com.example.demo.config.ApplicationConfig;
+import com.example.demo.utils.FileUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.textract.TextractClient;
 import software.amazon.awssdk.services.textract.model.*;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 @Slf4j
@@ -29,6 +33,7 @@ import java.util.List;
 public class AwsService {
 
     private final ApplicationConfig applicationConfig;
+    private final FileUtils fileUtils = new FileUtils();
     private final JsonBuilder jsonBuilder = new JsonBuilder();
     private static final Logger logger = LoggerFactory.getLogger(ApplicationConfig.class);
 
@@ -141,7 +146,7 @@ public class AwsService {
             throw new RuntimeException(e.getMessage());
         }
     }
-    public ResponseEntity<InputStreamResource> downloadDocument(String key) throws S3Exception {
+    public ResponseEntity<InputStreamResource> downloadDocument(String key, String downloadFormat) throws S3Exception {
         String bucketName = applicationConfig.getAwsBucketName();
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
@@ -157,18 +162,7 @@ public class AwsService {
                     .key(key)
                     .build();
 
-            ResponseBytes<GetObjectResponse> responseInputStream = s3Client.getObjectAsBytes(getObjectRequest);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.setContentDispositionFormData("attachment", key);
-
-            InputStreamResource inputStreamResource = new InputStreamResource(responseInputStream.asInputStream());
-
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(inputStreamResource);
-
+            return fileUtils.getImageResponse(s3Client, getObjectRequest, key, downloadFormat);
         }
         catch (S3Exception e) {
             logger.error("Runtime exception occurred {}", e.getMessage());

@@ -77,10 +77,11 @@ public class AwsController {
             throw new RuntimeException(e.getMessage());
         }
     }
+
     @GetMapping(value = "/awsDownload", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<InputStreamResource> downloadDocument(@RequestParam String key) {
+    public ResponseEntity<InputStreamResource> downloadDocument(@RequestParam String key, @RequestParam String downloadFormat) {
         try {
-            return awsService.downloadDocument(key);
+            return awsService.downloadDocument(key, downloadFormat);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
