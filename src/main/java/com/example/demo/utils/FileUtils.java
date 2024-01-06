@@ -1,5 +1,8 @@
 package com.example.demo.utils;
 
+import com.example.demo.config.ApplicationConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,6 +19,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 public class FileUtils {
+    private static final Logger logger = LoggerFactory.getLogger(ApplicationConfig.class);
+
     public ResponseEntity<InputStreamResource> getImageResponse(S3Client s3Client, GetObjectRequest getObjectRequest, String key, String requestType) throws S3Exception {
         try {
             ResponseBytes<GetObjectResponse> responseBytes = s3Client.getObjectAsBytes(getObjectRequest);
@@ -38,7 +43,7 @@ public class FileUtils {
 
             // deleting temp file
             Files.deleteIfExists(tempFile);
-
+            logger.info("Document uploaded successfully {}", inputStreamResource);
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(inputStreamResource);

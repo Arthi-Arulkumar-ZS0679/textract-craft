@@ -16,6 +16,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.File;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -31,21 +32,13 @@ public class AwsS3Service {
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
         String bucketName = applicationConfig.getAwsBucketName();
 
-        try (S3Client s3Client = S3Client.builder()
-                .region(region)
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
-                .build()) {
+        try (S3Client s3Client = S3Client.builder().region(region).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build()) {
             File documentFile = new File(filePath);
             String documentKeyName = documentFile.getName();
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(documentKeyName)
-                    .build();
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder().bucket(bucketName).key(documentKeyName).build();
             PutObjectResponse response = s3Client.putObject(putObjectRequest, documentFile.toPath());
-            System.out.println(response);
-            return String.format(
-                    "{\"status\": \"success\", \"message\": \"Upload successful!\", \"eTag\": %s, \"bucket\": \"%s\", \"key\": \"%s\"}",
-                    response.eTag(), bucketName, documentKeyName);
+            logger.info("Document uploaded successfully {}", response);
+            return String.format("{\"status\": \"success\", \"message\": \"Upload successful!\", \"eTag\": %s, \"bucket\": \"%s\", \"key\": \"%s\"}", response.eTag(), bucketName, documentKeyName);
         } catch (S3Exception e) {
             logger.error("Runtime exception occurred while uploading file{}", e.getMessage());
             throw new RuntimeException(e.getMessage());
@@ -58,16 +51,8 @@ public class AwsS3Service {
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
 
-        try (S3Client s3Client = S3Client.builder()
-                .region(region)
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
-                .build()) {
-
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(key)
-                    .build();
-
+        try (S3Client s3Client = S3Client.builder().region(region).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build()) {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder().bucket(bucketName).key(key).build();
             return fileUtils.getImageResponse(s3Client, getObjectRequest, key, downloadFormat);
         } catch (S3Exception e) {
             logger.error("Runtime exception occurred while downloading file{}", e.getMessage());
@@ -75,24 +60,78 @@ public class AwsS3Service {
         }
     }
 
-    public CreateBucketResponse createS3Bucket(String bucketName) throws S3Exception {
+    public void createS3Bucket(String bucketName) throws S3Exception {
+
+        Region region = applicationConfig.getAwsRegion();
+        String accessKeyId = applicationConfig.getAwsAccessKeyId();
+        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
 
         try {
-            Region region = applicationConfig.getAwsRegion();
-            String accessKeyId = applicationConfig.getAwsAccessKeyId();
-            String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
-
-            S3Client s3Client = S3Client.builder()
-                    .region(Region.of(String.valueOf(region)))
-                    .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
-                    .build();
-            CreateBucketRequest createBucketRequest = CreateBucketRequest.builder()
-                    .bucket(bucketName)
-                    .build();
-            return s3Client.createBucket(createBucketRequest);
+            S3Client s3Client = S3Client.builder().region(Region.of(String.valueOf(region))).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
+            CreateBucketRequest createBucketRequest = CreateBucketRequest.builder().bucket(bucketName).build();
+            logger.info("Bucket created successfully {}", bucketName);
+            s3Client.createBucket(createBucketRequest);
         } catch (S3Exception e) {
-            logger.error("Runtime exception occurred in bucket creation{}", e.getMessage());
+            logger.error("Runtime exception occurred in bucket creation {}", e.getMessage());
             throw new RuntimeException(e);
         }
+    }
+
+    public List<Bucket> getBucketList() throws S3Exception {
+
+        Region region = applicationConfig.getAwsRegion();
+        String accessKeyId = applicationConfig.getAwsAccessKeyId();
+        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
+
+        try {
+            S3Client s3Client = S3Client.builder().region(Region.of(String.valueOf(region))).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
+            ListBucketsResponse listBucketsResponse = s3Client.listBuckets();
+            logger.info("Bucket list fetching successfully {}", listBucketsResponse.buckets().stream().toList());
+            return listBucketsResponse.buckets().stream().toList();
+        } catch (S3Exception e) {
+            logger.error("Runtime exception occurred while getting bucket list {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public void deleteBucketRequest(String bucketName) throws S3Exception {
+
+        Region region = applicationConfig.getAwsRegion();
+        String accessKeyId = applicationConfig.getAwsAccessKeyId();
+        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
+
+        try {
+            S3Client s3Client = S3Client.builder().region(Region.of(String.valueOf(region))).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
+            DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder()
+                    .bucket(bucketName)
+                    .build();
+            logger.info("Bucket deleted successfully {}", bucketName);
+            s3Client.deleteBucket(deleteBucketRequest);
+        } catch (S3Exception e) {
+            logger.error("Runtime exception occurred while deleting a bucket {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<S3Object> getListOfFilesOrObjects(String bucketName) throws S3Exception {
+
+        Region region = applicationConfig.getAwsRegion();
+        String accessKeyId = applicationConfig.getAwsAccessKeyId();
+        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
+
+        try {
+            S3Client s3Client = S3Client.builder().region(Region.of(String.valueOf(region))).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
+            ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
+                    .bucket(bucketName)
+                    .build();
+            ListObjectsV2Response listObjectsV2Response = s3Client.listObjectsV2(listObjectsV2Request);
+            return listObjectsV2Response.contents();
+        } catch (S3Exception e) {
+            logger.error("Runtime exception occurred while deleting a bucket {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+
+
     }
 }

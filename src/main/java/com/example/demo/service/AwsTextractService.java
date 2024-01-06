@@ -1,7 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.config.ApplicationConfig;
-import com.example.demo.utils.FileUtils;
+import com.example.demo.utils.JsonBuilder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -25,7 +25,6 @@ import java.util.List;
 public class AwsTextractService {
 
     private final ApplicationConfig applicationConfig;
-    private final FileUtils fileUtils = new FileUtils();
     private final JsonBuilder jsonBuilder = new JsonBuilder();
     private static final Logger logger = LoggerFactory.getLogger(ApplicationConfig.class);
 

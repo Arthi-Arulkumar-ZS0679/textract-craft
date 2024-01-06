@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.service.AwsS3Service;
 import com.example.demo.service.AwsTextractService;
+import com.example.demo.utils.JsonBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -9,9 +10,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
+import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.textract.model.Query;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -96,11 +98,27 @@ public class AwsController {
 
     @PostMapping(value = "/awsCreateS3Bucket", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> createAwsBucket(@RequestParam String bucketName) {
-        CreateBucketResponse createBucketResponse = awsS3Service.createS3Bucket(bucketName);
-        System.out.println("response" + createBucketResponse);
+        awsS3Service.createS3Bucket(bucketName);
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.valueOf(MediaType.APPLICATION_OCTET_STREAM_VALUE));
+        httpHeaders.setContentType(MediaType.valueOf(String.valueOf(MediaType.APPLICATION_JSON)));
         final String responseBody = "Bucket creation successfully...";
         return new ResponseEntity<>(responseBody, httpHeaders, HttpStatus.OK);
     }
+
+    @GetMapping(value = "/awsGetBucketList", produces = MediaType.APPLICATION_JSON_VALUE)
+    public String getBucketList() {
+        final List<Bucket> listBucketsResponse = awsS3Service.getBucketList().stream().sorted(Comparator.comparing(Bucket::creationDate))
+                .toList();
+        return JsonBuilder.getBucketJsonResponse(listBucketsResponse);
+    }
+
+    @PostMapping(value = "/awsDeleteS3Bucket", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> deleteBucket(@RequestParam String bucketName) {
+        awsS3Service.deleteBucketRequest(bucketName);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.valueOf(String.valueOf(MediaType.APPLICATION_JSON)));
+        final String responseBody = "Bucket deletion successfully...";
+        return new ResponseEntity<>(responseBody, httpHeaders, HttpStatus.OK);
+    }
+
 }
