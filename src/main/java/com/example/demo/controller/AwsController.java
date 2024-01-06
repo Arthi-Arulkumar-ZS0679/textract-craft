@@ -4,9 +4,12 @@ import com.example.demo.service.AwsS3Service;
 import com.example.demo.service.AwsTextractService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.textract.model.Query;
 
 import java.util.List;
@@ -20,7 +23,7 @@ public class AwsController {
     private final AwsS3Service awsS3Service;
 
     @Autowired
-    public AwsController(AwsTextractService awsService, AwsS3Service awsS3Service){
+    public AwsController(AwsTextractService awsService, AwsS3Service awsS3Service) {
         this.awsService = awsService;
         this.awsS3Service = awsS3Service;
     }
@@ -72,7 +75,7 @@ public class AwsController {
         }
     }
 
-    @PostMapping(value = "/awsUpload", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/awsFileUpload", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> upload(@RequestParam String filePath) {
         try {
             String response = awsS3Service.uploadDocument(filePath);
@@ -82,7 +85,7 @@ public class AwsController {
         }
     }
 
-    @GetMapping(value = "/awsDownload", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/awsFileDownload", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<InputStreamResource> downloadDocument(@RequestParam String key, @RequestParam String downloadFormat) {
         try {
             return awsS3Service.downloadDocument(key, downloadFormat);
@@ -91,9 +94,13 @@ public class AwsController {
         }
     }
 
-    @PostMapping(value = "/awsCreateBucket", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/awsCreateS3Bucket", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> createAwsBucket(@RequestParam String bucketName) {
-        System.out.println(bucketName);
-        return null;
+        CreateBucketResponse createBucketResponse = awsS3Service.createS3Bucket(bucketName);
+        System.out.println("response" + createBucketResponse);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.valueOf(MediaType.APPLICATION_OCTET_STREAM_VALUE));
+        final String responseBody = "Bucket creation successfully...";
+        return new ResponseEntity<>(responseBody, httpHeaders, HttpStatus.OK);
     }
 }

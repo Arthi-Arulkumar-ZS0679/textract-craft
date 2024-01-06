@@ -13,10 +13,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectResponse;
-import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.File;
 
@@ -50,10 +47,11 @@ public class AwsS3Service {
                     "{\"status\": \"success\", \"message\": \"Upload successful!\", \"eTag\": %s, \"bucket\": \"%s\", \"key\": \"%s\"}",
                     response.eTag(), bucketName, documentKeyName);
         } catch (S3Exception e) {
-            logger.error("Runtime exception occurred {}", e.getMessage());
+            logger.error("Runtime exception occurred while uploading file{}", e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
     }
+
     public ResponseEntity<InputStreamResource> downloadDocument(String key, String downloadFormat) throws S3Exception {
         String bucketName = applicationConfig.getAwsBucketName();
         Region region = applicationConfig.getAwsRegion();
@@ -71,10 +69,30 @@ public class AwsS3Service {
                     .build();
 
             return fileUtils.getImageResponse(s3Client, getObjectRequest, key, downloadFormat);
-        }
-        catch (S3Exception e) {
-            logger.error("Runtime exception occurred {}", e.getMessage());
+        } catch (S3Exception e) {
+            logger.error("Runtime exception occurred while downloading file{}", e.getMessage());
             throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public CreateBucketResponse createS3Bucket(String bucketName) throws S3Exception {
+
+        try {
+            Region region = applicationConfig.getAwsRegion();
+            String accessKeyId = applicationConfig.getAwsAccessKeyId();
+            String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
+
+            S3Client s3Client = S3Client.builder()
+                    .region(Region.of(String.valueOf(region)))
+                    .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
+                    .build();
+            CreateBucketRequest createBucketRequest = CreateBucketRequest.builder()
+                    .bucket(bucketName)
+                    .build();
+            return s3Client.createBucket(createBucketRequest);
+        } catch (S3Exception e) {
+            logger.error("Runtime exception occurred in bucket creation{}", e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 }
