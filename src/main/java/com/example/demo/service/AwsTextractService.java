@@ -30,7 +30,7 @@ import java.util.List;
 @Slf4j
 @Service
 @AllArgsConstructor
-public class AwsService {
+public class AwsTextractService {
 
     private final ApplicationConfig applicationConfig;
     private final FileUtils fileUtils = new FileUtils();
@@ -120,53 +120,4 @@ public class AwsService {
         }
     }
 
-    public String uploadDocument(String filePath) throws S3Exception {
-        Region region = applicationConfig.getAwsRegion();
-        String accessKeyId = applicationConfig.getAwsAccessKeyId();
-        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
-        String bucketName = applicationConfig.getAwsBucketName();
-
-        try (S3Client s3Client = S3Client.builder()
-                .region(region)
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
-                .build()) {
-            File documentFile = new File(filePath);
-            String documentKeyName = documentFile.getName();
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(documentKeyName)
-                    .build();
-            PutObjectResponse response = s3Client.putObject(putObjectRequest, documentFile.toPath());
-            System.out.println(response);
-            return String.format(
-                    "{\"status\": \"success\", \"message\": \"Upload successful!\", \"eTag\": %s, \"bucket\": \"%s\", \"key\": \"%s\"}",
-                    response.eTag(), bucketName, documentKeyName);
-        } catch (S3Exception e) {
-            logger.error("Runtime exception occurred {}", e.getMessage());
-            throw new RuntimeException(e.getMessage());
-        }
-    }
-    public ResponseEntity<InputStreamResource> downloadDocument(String key, String downloadFormat) throws S3Exception {
-        String bucketName = applicationConfig.getAwsBucketName();
-        Region region = applicationConfig.getAwsRegion();
-        String accessKeyId = applicationConfig.getAwsAccessKeyId();
-        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
-
-        try (S3Client s3Client = S3Client.builder()
-                .region(region)
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
-                .build()) {
-
-            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(key)
-                    .build();
-
-            return fileUtils.getImageResponse(s3Client, getObjectRequest, key, downloadFormat);
-        }
-        catch (S3Exception e) {
-            logger.error("Runtime exception occurred {}", e.getMessage());
-            throw new RuntimeException(e.getMessage());
-        }
-    }
 }

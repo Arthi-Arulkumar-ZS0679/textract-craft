@@ -25,7 +25,7 @@ public class FileUtils {
             if (!requestType.equalsIgnoreCase(inputFileExtension)) {
                 inputFileExtension = requestType.toLowerCase();
             }
-            String updatedFileName = replaceFileExtension(key, inputFileExtension);
+            final String updatedFileName = replaceFileExtension(key, inputFileExtension);
 
             final Path tempFile = Files.createTempFile("tempImage", "." + inputFileExtension);
             Files.copy(responseBytes.asInputStream(), tempFile, StandardCopyOption.REPLACE_EXISTING);
@@ -43,16 +43,16 @@ public class FileUtils {
                     .headers(headers)
                     .body(inputStreamResource);
 
-        } catch  (S3Exception | IOException e) {
+        } catch (S3Exception | IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     // Method to replace file extension in the filename
     private static String replaceFileExtension(String originalFileName, String newExtension) {
-        int lastDotIndex = originalFileName.lastIndexOf('.');
+        final int lastDotIndex = originalFileName.lastIndexOf('.');
         if (lastDotIndex != -1) {
-            String fileNameWithoutExtension = originalFileName.substring(0, lastDotIndex);
+            final String fileNameWithoutExtension = originalFileName.substring(0, lastDotIndex);
             return fileNameWithoutExtension + "." + newExtension;
         } else {
             return originalFileName + "." + newExtension;
