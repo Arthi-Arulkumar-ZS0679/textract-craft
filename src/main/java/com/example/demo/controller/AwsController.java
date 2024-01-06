@@ -68,7 +68,7 @@ public class AwsController {
         }
     }
 
-    @PostMapping("/awsUpload")
+    @PostMapping(value = "/awsUpload", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> upload(@RequestParam String filePath) {
         try {
             String response = awsService.uploadDocument(filePath);
@@ -77,7 +77,7 @@ public class AwsController {
             throw new RuntimeException(e.getMessage());
         }
     }
-    @GetMapping("/awsDownload")
+    @GetMapping(value = "/awsDownload", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<InputStreamResource> downloadDocument(@RequestParam String key) {
         try {
             return awsService.downloadDocument(key);

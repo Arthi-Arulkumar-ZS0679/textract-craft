@@ -13,20 +13,14 @@ import org.springframework.stereotype.Service;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.textract.TextractClient;
 import software.amazon.awssdk.services.textract.model.*;
 
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.List;
 
 @Slf4j
@@ -38,7 +32,7 @@ public class AwsService {
     private final JsonBuilder jsonBuilder = new JsonBuilder();
     private static final Logger logger = LoggerFactory.getLogger(ApplicationConfig.class);
 
-    public String signatureExtractor(String filePath) throws RuntimeException {
+    public String signatureExtractor(String filePath) throws TextractException {
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
@@ -53,14 +47,14 @@ public class AwsService {
                     AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.SIGNATURES).build());
             logger.info("\n*********************Table Extraction***********************\n {}", response);
             return jsonBuilder.buildJson(response.blocks(), BlockType.SIGNATURE);
-        } catch (IOException e) {
+        } catch (TextractException | IOException e) {
             logger.error("Runtime exception occurred in signature extraction {}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
 
-    public String tableExtractor(String filePath) throws RuntimeException {
+    public String tableExtractor(String filePath) throws TextractException {
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
@@ -70,13 +64,13 @@ public class AwsService {
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.TABLES).build());
             logger.info("\n*********************Table Extraction***********************\n {}", response);
             return jsonBuilder.buildJson(response.blocks(), BlockType.TABLE);
-        } catch (IOException e) {
+        } catch (TextractException | IOException e) {
             logger.error("Runtime exception occurred in table extraction {}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
-    public String formExtractor(String filePath) throws RuntimeException {
+    public String formExtractor(String filePath) throws TextractException {
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
@@ -86,13 +80,13 @@ public class AwsService {
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.FORMS).build());
             logger.info("\n*********************Form Extraction***********************\n {}", response);
             return jsonBuilder.buildJson(response.blocks(), BlockType.LINE);
-        } catch (IOException e) {
+        } catch (TextractException | IOException e) {
             logger.error("Runtime exception occurred in form extraction {}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
-    public String queryExtractor(String filePath, List<Query> queries) throws RuntimeException {
+    public String queryExtractor(String filePath, List<Query> queries) throws TextractException {
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
@@ -115,13 +109,13 @@ public class AwsService {
                             .build());
             logger.info("\n*********************Query Extraction***********************\n {}", response);
             return jsonBuilder.buildJson(response.blocks(), BlockType.QUERY_RESULT);
-        } catch (IOException e) {
+        } catch (TextractException | IOException e) {
             logger.error("Runtime exception occurred in query extraction {}", e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
-    public String uploadDocument(String filePath) {
+    public String uploadDocument(String filePath) throws S3Exception {
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
@@ -142,12 +136,12 @@ public class AwsService {
             return String.format(
                     "{\"status\": \"success\", \"message\": \"Upload successful!\", \"eTag\": %s, \"bucket\": \"%s\", \"key\": \"%s\"}",
                     response.eTag(), bucketName, documentKeyName);
-        } catch (Exception e) {
+        } catch (S3Exception e) {
             logger.error("Runtime exception occurred {}", e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
     }
-    public ResponseEntity<InputStreamResource> downloadDocument(String key) throws IOException {
+    public ResponseEntity<InputStreamResource> downloadDocument(String key) throws S3Exception {
         String bucketName = applicationConfig.getAwsBucketName();
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
@@ -178,7 +172,7 @@ public class AwsService {
         }
         catch (S3Exception e) {
             logger.error("Runtime exception occurred {}", e.getMessage());
-            return ResponseEntity.status(500).body(null);
+            throw new RuntimeException(e.getMessage());
         }
     }
 }
