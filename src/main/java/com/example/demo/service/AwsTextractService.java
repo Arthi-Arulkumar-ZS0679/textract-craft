@@ -41,7 +41,6 @@ public class AwsTextractService {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(
                     AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.SIGNATURES).build());
-            logger.info("\n*********************Table Extraction***********************\n {}", response);
             return jsonBuilder.buildJson(response.blocks(), BlockType.SIGNATURE);
         } catch (TextractException | IOException e) {
             logger.error("Runtime exception occurred in signature extraction {}", e.getMessage());
@@ -58,7 +57,6 @@ public class AwsTextractService {
         try (InputStream inputStream = new FileInputStream(filePath)) {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.TABLES).build());
-            logger.info("\n*********************Table Extraction***********************\n {}", response);
             return jsonBuilder.buildJson(response.blocks(), BlockType.TABLE);
         } catch (TextractException | IOException e) {
             logger.error("Runtime exception occurred in table extraction {}", e.getMessage());
@@ -74,7 +72,6 @@ public class AwsTextractService {
         try (InputStream inputStream = new FileInputStream(filePath)) {
             Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
             AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.FORMS).build());
-            logger.info("\n*********************Form Extraction***********************\n {}", response);
             return jsonBuilder.buildJson(response.blocks(), BlockType.LINE);
         } catch (TextractException | IOException e) {
             logger.error("Runtime exception occurred in form extraction {}", e.getMessage());
@@ -103,7 +100,6 @@ public class AwsTextractService {
                             .featureTypes(FeatureType.QUERIES)
                             .queriesConfig(queryConfig)
                             .build());
-            logger.info("\n*********************Query Extraction***********************\n {}", response);
             return jsonBuilder.buildJson(response.blocks(), BlockType.QUERY_RESULT);
         } catch (TextractException | IOException e) {
             logger.error("Runtime exception occurred in query extraction {}", e.getMessage());

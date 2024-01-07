@@ -3,6 +3,8 @@ package com.example.demo.controller;
 import com.example.demo.service.AwsS3Service;
 import com.example.demo.service.AwsTextractService;
 import com.example.demo.utils.JsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -28,6 +30,8 @@ public class AwsController {
 
     private final JsonBuilder jsonBuilder = new JsonBuilder();
 
+    private static final Logger logger = LoggerFactory.getLogger(AwsController.class);
+
 
     @Autowired
     public AwsController(AwsTextractService awsService, AwsS3Service awsS3Service) {
@@ -39,6 +43,7 @@ public class AwsController {
     public ResponseEntity<String> awsSignatureExtractor(@RequestParam String filePath) {
         try {
             String response = awsService.signatureExtractor(filePath);
+            logger.info("\n*********************Signature Extraction Successfully***********************\n {}", response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -49,6 +54,7 @@ public class AwsController {
     public ResponseEntity<String> tableExtractor(@RequestParam String filePath) {
         try {
             String response = awsService.tableExtractor(filePath);
+            logger.info("\n*********************Table Extraction Successfully***********************\n {}", response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -59,6 +65,7 @@ public class AwsController {
     public ResponseEntity<String> formExtractor(@RequestParam String filePath) {
         try {
             String response = awsService.formExtractor(filePath);
+            logger.info("\n*********************Form Extraction Successfully***********************\n {}", response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -76,6 +83,7 @@ public class AwsController {
                     .collect(Collectors.toList());
 
             String response = awsService.queryExtractor(filePath, queries);
+            logger.info("\n*********************Query Extraction Successfully***********************\n {}", response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -86,6 +94,7 @@ public class AwsController {
     public ResponseEntity<String> upload(@RequestParam String filePath) {
         try {
             String response = awsS3Service.uploadDocument(filePath);
+            logger.info("Document uploaded successfully {}", filePath);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -95,6 +104,7 @@ public class AwsController {
     @GetMapping(value = "/awsFileDownload", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<InputStreamResource> downloadDocument(@RequestParam String key, @RequestParam String downloadFormat) {
         try {
+            logger.info("File download successfully file name is {} and download format is {}", key, downloadFormat);
             return awsS3Service.downloadDocument(key, downloadFormat);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -103,36 +113,52 @@ public class AwsController {
 
     @PostMapping(value = "/awsCreateS3Bucket", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> createAwsBucket(@RequestParam String bucketName) {
-        awsS3Service.createS3Bucket(bucketName);
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.valueOf(String.valueOf(MediaType.APPLICATION_JSON)));
-        final String responseBody = "Bucket creation successfully...";
-        return new ResponseEntity<>(responseBody, httpHeaders, HttpStatus.OK);
+        try {
+            awsS3Service.createS3Bucket(bucketName);
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.setContentType(MediaType.valueOf(String.valueOf(MediaType.APPLICATION_JSON)));
+            final String responseBody = "Bucket creation successfully...";
+            logger.info("Bucket created successfully {}", bucketName);
+            return new ResponseEntity<>(responseBody, httpHeaders, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     @GetMapping(value = "/awsGetBucketList", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getBucketList() {
-        final List<Bucket> listBucketsResponse = awsS3Service.getBucketList().stream().sorted(Comparator.comparing(Bucket::creationDate))
-                .toList();
-        return JsonBuilder.getBucketJsonResponse(listBucketsResponse);
+        try {
+            final List<Bucket> listBucketsResponse = awsS3Service.getBucketList().stream().sorted(Comparator.comparing(Bucket::creationDate))
+                    .toList();
+            return JsonBuilder.getBucketJsonResponse(listBucketsResponse);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
     }
 
     @PostMapping(value = "/awsDeleteS3Bucket", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> deleteBucket(@RequestParam String bucketName) {
-        awsS3Service.deleteBucketRequest(bucketName);
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.valueOf(String.valueOf(MediaType.APPLICATION_JSON)));
-        final String responseBody = "Bucket deletion successfully...";
-        return new ResponseEntity<>(responseBody, httpHeaders, HttpStatus.OK);
+        try {
+            awsS3Service.deleteBucketRequest(bucketName);
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.setContentType(MediaType.valueOf(String.valueOf(MediaType.APPLICATION_JSON)));
+            final String responseBody = "Bucket deletion successfully...";
+            logger.info("Bucket deleted successfully {}", bucketName);
+            return new ResponseEntity<>(responseBody, httpHeaders, HttpStatus.OK);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     @PostMapping(value = "/awsGetAllFilesOrObjects", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getListOfFilesOrObjects(@RequestParam String bucketName) throws S3Exception {
         try {
             List<S3Object> getListOfFiles = awsS3Service.getListOfFilesOrObjects(bucketName);
+            logger.info("List of files fetching successfully from the given bucket {}", bucketName);
             return jsonBuilder.getListOfFilesOrObjects(getListOfFiles);
         } catch (S3Exception e) {
-            return ResponseEntity.status(500).body("Error retrieving files from S3");
+            throw new RuntimeException(e.getMessage());
         }
     }
 }

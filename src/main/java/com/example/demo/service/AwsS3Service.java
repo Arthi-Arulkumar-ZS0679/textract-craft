@@ -24,7 +24,7 @@ import java.util.List;
 public class AwsS3Service {
     private final ApplicationConfig applicationConfig;
     private final FileUtils fileUtils = new FileUtils();
-    private static final Logger logger = LoggerFactory.getLogger(ApplicationConfig.class);
+    private static final Logger logger = LoggerFactory.getLogger(AwsS3Service.class);
 
     public String uploadDocument(String filePath) throws S3Exception {
         Region region = applicationConfig.getAwsRegion();
@@ -37,7 +37,6 @@ public class AwsS3Service {
             String documentKeyName = documentFile.getName();
             PutObjectRequest putObjectRequest = PutObjectRequest.builder().bucket(bucketName).key(documentKeyName).build();
             PutObjectResponse response = s3Client.putObject(putObjectRequest, documentFile.toPath());
-            logger.info("Document uploaded successfully {}", response);
             return String.format("{\"status\": \"success\", \"message\": \"Upload successful!\", \"eTag\": %s, \"bucket\": \"%s\", \"key\": \"%s\"}", response.eTag(), bucketName, documentKeyName);
         } catch (S3Exception e) {
             logger.error("Runtime exception occurred while uploading file{}", e.getMessage());
@@ -69,7 +68,6 @@ public class AwsS3Service {
         try {
             S3Client s3Client = S3Client.builder().region(Region.of(String.valueOf(region))).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
             CreateBucketRequest createBucketRequest = CreateBucketRequest.builder().bucket(bucketName).build();
-            logger.info("Bucket created successfully {}", bucketName);
             s3Client.createBucket(createBucketRequest);
         } catch (S3Exception e) {
             logger.error("Runtime exception occurred in bucket creation {}", e.getMessage());
@@ -86,7 +84,6 @@ public class AwsS3Service {
         try {
             S3Client s3Client = S3Client.builder().region(Region.of(String.valueOf(region))).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
             ListBucketsResponse listBucketsResponse = s3Client.listBuckets();
-            logger.info("Bucket list fetching successfully {}", listBucketsResponse.buckets().stream().toList());
             return listBucketsResponse.buckets().stream().toList();
         } catch (S3Exception e) {
             logger.error("Runtime exception occurred while getting bucket list {}", e.getMessage());
@@ -106,7 +103,6 @@ public class AwsS3Service {
             DeleteBucketRequest deleteBucketRequest = DeleteBucketRequest.builder()
                     .bucket(bucketName)
                     .build();
-            logger.info("Bucket deleted successfully {}", bucketName);
             s3Client.deleteBucket(deleteBucketRequest);
         } catch (S3Exception e) {
             logger.error("Runtime exception occurred while deleting a bucket {}", e.getMessage());
@@ -126,7 +122,6 @@ public class AwsS3Service {
                     .bucket(bucketName)
                     .build();
             ListObjectsV2Response listObjectsV2Response = s3Client.listObjectsV2(listObjectsV2Request);
-            logger.info(listObjectsV2Response.contents().toString());
             return listObjectsV2Response.contents();
         } catch (S3Exception e) {
             logger.error("Runtime exception occurred while deleting a bucket {}", e.getMessage());

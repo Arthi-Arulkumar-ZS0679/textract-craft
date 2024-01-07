@@ -1,5 +1,6 @@
 package com.example.demo.utils;
 
+import com.example.demo.controller.AwsController;
 import com.example.demo.dto.S3ObjectDto;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -7,6 +8,8 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.S3Object;
@@ -20,6 +23,8 @@ public class JsonBuilder {
     private String jsonResponse = null;
 
     private final S3ObjectDto s3ObjectDto = new S3ObjectDto();
+
+    private static final Logger logger = LoggerFactory.getLogger(AwsController.class);
 
     public String buildJson(List<Block> allBlocks, BlockType signature) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -102,7 +107,7 @@ public class JsonBuilder {
 
             List<Map<String, String>> jsonList = getMapList(sortedBuckets);
             ObjectMapper objectMapper = new ObjectMapper();
-
+            logger.info("Bucket list fetching successfully {}", buckets);
             return objectMapper.writeValueAsString(jsonList);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
