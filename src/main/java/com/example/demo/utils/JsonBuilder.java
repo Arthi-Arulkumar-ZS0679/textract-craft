@@ -1,19 +1,25 @@
 package com.example.demo.utils;
 
+import com.example.demo.dto.S3ObjectDto;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.springframework.http.ResponseEntity;
 import software.amazon.awssdk.services.s3.model.Bucket;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.textract.model.*;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class JsonBuilder {
     private String jsonResponse = null;
+
+    private final S3ObjectDto s3ObjectDto = new S3ObjectDto();
 
     public String buildJson(List<Block> allBlocks, BlockType signature) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -123,27 +129,29 @@ public class JsonBuilder {
         return jsonList;
     }
 
-    public static String getS3ObjectListJson(List<S3Object> s3Objects) {
+    public ResponseEntity<String>  getListOfFilesOrObjects(List<S3Object> getListOfFiles) {
+        List<S3ObjectDto> dtoList = getListOfFiles.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        Map<String, List<S3ObjectDto>> responseMap = new HashMap<>();
+        responseMap.put("files", dtoList);
+
         ObjectMapper objectMapper = new ObjectMapper();
-
+        String json;
         try {
-            StringBuilder jsonBuilder = new StringBuilder("[");
-            for (int i = 0; i < s3Objects.size(); i++) {
-                S3Object s3Object = s3Objects.get(i);
-                String json = objectMapper.writeValueAsString(s3Object);
-
-                jsonBuilder.append(json);
-
-                // Add a comma if it's not the last element
-                if (i < s3Objects.size() - 1) {
-                    jsonBuilder.append(", ");
-                }
-            }
-            jsonBuilder.append("]");
-
-            return jsonBuilder.toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            json = objectMapper.writeValueAsString(responseMap);
+        } catch (JsonProcessingException e) {
+            return ResponseEntity.status(500).body("Error converting to JSON");
         }
+        return ResponseEntity.ok(json);
+    }
+
+    private S3ObjectDto convertToDto(S3Object s3Object) {
+        s3ObjectDto.setKey(s3Object.key());
+        s3ObjectDto.setLastModified(s3Object.lastModified().toString());
+        s3ObjectDto.setETag(s3Object.eTag());
+        s3ObjectDto.setSize(s3Object.size());
+        s3ObjectDto.setStorageClass(String.valueOf(s3Object.storageClass()));
+        return s3ObjectDto;
     }
 }

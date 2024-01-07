@@ -126,12 +126,12 @@ public class AwsS3Service {
                     .bucket(bucketName)
                     .build();
             ListObjectsV2Response listObjectsV2Response = s3Client.listObjectsV2(listObjectsV2Request);
+            logger.info(listObjectsV2Response.contents().toString());
             return listObjectsV2Response.contents();
         } catch (S3Exception e) {
             logger.error("Runtime exception occurred while deleting a bucket {}", e.getMessage());
             throw new RuntimeException(e);
         }
-
 
     }
 }

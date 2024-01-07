@@ -11,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import software.amazon.awssdk.services.s3.model.Bucket;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.textract.model.Query;
 
 import java.util.Comparator;
@@ -23,6 +25,9 @@ public class AwsController {
     private final AwsTextractService awsService;
 
     private final AwsS3Service awsS3Service;
+
+    private final JsonBuilder jsonBuilder = new JsonBuilder();
+
 
     @Autowired
     public AwsController(AwsTextractService awsService, AwsS3Service awsS3Service) {
@@ -121,4 +126,14 @@ public class AwsController {
         return new ResponseEntity<>(responseBody, httpHeaders, HttpStatus.OK);
     }
 
+    @PostMapping(value = "/awsGetAllFilesOrObjects", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getListOfFilesOrObjects(@RequestParam String bucketName) throws S3Exception {
+        try {
+            List<S3Object> getListOfFiles = awsS3Service.getListOfFilesOrObjects(bucketName);
+            return jsonBuilder.getListOfFilesOrObjects(getListOfFiles);
+        } catch (S3Exception e) {
+            return ResponseEntity.status(500).body("Error retrieving files from S3");
+        }
+    }
 }
+
