@@ -1,22 +1,30 @@
-package com.example.demo.service;
+package com.example.demo.utils;
 
+import com.example.demo.controller.AwsController;
+import com.example.demo.dto.S3ObjectDto;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
+import software.amazon.awssdk.services.s3.model.Bucket;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.textract.model.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class JsonBuilder {
     private String jsonResponse = null;
+
+    private final S3ObjectDto s3ObjectDto = new S3ObjectDto();
+
+    private static final Logger logger = LoggerFactory.getLogger(AwsController.class);
 
     public String buildJson(List<Block> allBlocks, BlockType signature) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -89,5 +97,66 @@ public class JsonBuilder {
 
             jsonGenerator.writeEndObject();
         }
+    }
+
+    public static String getBucketJsonResponse(List<Bucket> buckets) {
+        try {
+            List<Bucket> sortedBuckets = buckets.stream()
+                    .sorted(Comparator.comparing(Bucket::creationDate))
+                    .toList();
+
+            List<Map<String, String>> jsonList = getMapList(sortedBuckets);
+            ObjectMapper objectMapper = new ObjectMapper();
+            logger.info("Bucket list fetching successfully {}", buckets);
+            return objectMapper.writeValueAsString(jsonList);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static List<Map<String, String>> getMapList(List<Bucket> sortedBuckets) {
+
+        List<Map<String, String>> jsonList = new ArrayList<>();
+
+        Map<String, String> totalBucketsMap = new LinkedHashMap<>();
+        totalBucketsMap.put("totalBuckets", String.valueOf(sortedBuckets.size()));
+        jsonList.add(totalBucketsMap);
+
+        // mapping and ordering response name with date
+        for (int i = 0; i < sortedBuckets.size(); i++) {
+            Bucket bucket = sortedBuckets.get(i);
+            String createdDate = bucket.creationDate().toString();
+            Map<String, String> bucketMap = new LinkedHashMap<>();
+            bucketMap.put("bucket " + (i + 1), bucket.name());
+            bucketMap.put("createdDate", createdDate);
+            jsonList.add(bucketMap);
+        }
+        return jsonList;
+    }
+
+    public ResponseEntity<String>  getListOfFilesOrObjects(List<S3Object> getListOfFiles) {
+        List<S3ObjectDto> dtoList = getListOfFiles.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        Map<String, List<S3ObjectDto>> responseMap = new HashMap<>();
+        responseMap.put("files", dtoList);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json;
+        try {
+            json = objectMapper.writeValueAsString(responseMap);
+        } catch (JsonProcessingException e) {
+            return ResponseEntity.status(500).body("Error converting to JSON");
+        }
+        return ResponseEntity.ok(json);
+    }
+
+    private S3ObjectDto convertToDto(S3Object s3Object) {
+        s3ObjectDto.setKey(s3Object.key());
+        s3ObjectDto.setLastModified(s3Object.lastModified().toString());
+        s3ObjectDto.setETag(s3Object.eTag());
+        s3ObjectDto.setSize(s3Object.size());
+        s3ObjectDto.setStorageClass(String.valueOf(s3Object.storageClass()));
+        return s3ObjectDto;
     }
 }
