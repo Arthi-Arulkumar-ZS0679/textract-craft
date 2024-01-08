@@ -1,7 +1,7 @@
 package com.example.demo.service;
 
 
-public class helperUtils {
+public class HelperUtils {
 //    public String checkJobStatus(String jobId)
 //    {
 //
