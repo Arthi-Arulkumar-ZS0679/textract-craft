@@ -134,7 +134,6 @@ public class AwsController {
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
-
     }
 
     @PostMapping(value = "/awsDeleteS3Bucket", produces = MediaType.APPLICATION_JSON_VALUE)
