@@ -3,7 +3,7 @@ package com.example.demo.dto;
 import lombok.Data;
 
 @Data
-public class S3ObjectDto {
+public class S3GetListOfFilesAndObjectDto {
     private String key;
     private String lastModified;
     private String eTag;

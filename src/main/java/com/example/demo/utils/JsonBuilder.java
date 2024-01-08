@@ -1,7 +1,7 @@
 package com.example.demo.utils;
 
 import com.example.demo.controller.AwsController;
-import com.example.demo.dto.S3ObjectDto;
+import com.example.demo.dto.S3GetListOfFilesAndObjectDto;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class JsonBuilder {
     private String jsonResponse = null;
 
-    private final S3ObjectDto s3ObjectDto = new S3ObjectDto();
+    private final S3GetListOfFilesAndObjectDto s3ObjectDto = new S3GetListOfFilesAndObjectDto();
 
     private static final Logger logger = LoggerFactory.getLogger(AwsController.class);
 
@@ -135,10 +135,10 @@ public class JsonBuilder {
     }
 
     public ResponseEntity<String>  getListOfFilesOrObjects(List<S3Object> getListOfFiles) {
-        List<S3ObjectDto> dtoList = getListOfFiles.stream()
+        List<S3GetListOfFilesAndObjectDto> dtoList = getListOfFiles.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
-        Map<String, List<S3ObjectDto>> responseMap = new HashMap<>();
+        Map<String, List<S3GetListOfFilesAndObjectDto>> responseMap = new HashMap<>();
         responseMap.put("files", dtoList);
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -151,7 +151,7 @@ public class JsonBuilder {
         return ResponseEntity.ok(json);
     }
 
-    private S3ObjectDto convertToDto(S3Object s3Object) {
+    private S3GetListOfFilesAndObjectDto convertToDto(S3Object s3Object) {
         s3ObjectDto.setKey(s3Object.key());
         s3ObjectDto.setLastModified(s3Object.lastModified().toString());
         s3ObjectDto.setETag(s3Object.eTag());

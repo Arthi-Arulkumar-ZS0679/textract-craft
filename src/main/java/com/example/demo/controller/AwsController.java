@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import software.amazon.awssdk.services.rekognition.model.FaceDetail;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
@@ -154,10 +155,20 @@ public class AwsController {
     public ResponseEntity<String> getListOfFilesOrObjects(@RequestParam String bucketName) throws S3Exception {
         try {
             List<S3Object> getListOfFiles = awsS3Service.getListOfFilesOrObjects(bucketName);
+            System.out.println(getListOfFiles);
             logger.info("List of files fetching successfully from the given bucket {}", bucketName);
             return jsonBuilder.getListOfFilesOrObjects(getListOfFiles);
         } catch (S3Exception e) {
             throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/awsDetectFace", produces = MediaType.ALL_VALUE)
+    public List<FaceDetail> recognizeFaceFromImage(@RequestParam String filePath) throws S3Exception {
+        try {
+            return awsS3Service.detectFacesRequest(filePath);
+        } catch (S3Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }
