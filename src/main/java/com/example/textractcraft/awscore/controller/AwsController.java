@@ -1,8 +1,8 @@
-package com.example.demo.controller;
+package com.example.textractcraft.awscore.controller;
 
-import com.example.demo.service.AwsS3Service;
-import com.example.demo.service.AwsTextractService;
-import com.example.demo.utils.JsonBuilder;
+import com.example.textractcraft.awscore.service.AwsS3Service;
+import com.example.textractcraft.awscore.service.AwsTextractService;
+import com.example.textractcraft.awscore.utils.JsonBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

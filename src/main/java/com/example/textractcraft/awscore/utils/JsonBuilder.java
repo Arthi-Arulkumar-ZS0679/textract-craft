@@ -1,7 +1,7 @@
-package com.example.demo.utils;
+package com.example.textractcraft.awscore.utils;
 
-import com.example.demo.controller.AwsController;
-import com.example.demo.dto.S3GetListOfFilesAndObjectDto;
+import com.example.textractcraft.awscore.controller.AwsController;
+import com.example.textractcraft.awscore.dto.S3GetListOfFilesAndObjectDto;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;

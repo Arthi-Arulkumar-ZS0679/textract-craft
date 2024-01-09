@@ -1,7 +1,7 @@
-package com.example.demo.service;
+package com.example.textractcraft.awscore.service;
 
-import com.example.demo.config.ApplicationConfig;
-import com.example.demo.utils.FileUtils;
+import com.example.textractcraft.config.ApplicationConfig;
+import com.example.textractcraft.awscore.utils.FileUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;

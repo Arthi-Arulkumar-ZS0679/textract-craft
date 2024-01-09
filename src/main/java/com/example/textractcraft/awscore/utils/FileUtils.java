@@ -1,6 +1,6 @@
-package com.example.demo.utils;
+package com.example.textractcraft.awscore.utils;
 
-import com.example.demo.config.ApplicationConfig;
+import com.example.textractcraft.config.ApplicationConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -54,7 +54,7 @@ public class FileUtils {
     }
 
     // Method to replace file extension in the filename
-    private static String replaceFileExtension(String originalFileName, String newExtension) {
+    public static String replaceFileExtension(String originalFileName, String newExtension) {
         final int lastDotIndex = originalFileName.lastIndexOf('.');
         if (lastDotIndex != -1) {
             final String fileNameWithoutExtension = originalFileName.substring(0, lastDotIndex);
