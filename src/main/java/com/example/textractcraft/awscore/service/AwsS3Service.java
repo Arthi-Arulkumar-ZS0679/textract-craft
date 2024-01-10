@@ -18,6 +18,12 @@ import software.amazon.awssdk.services.rekognition.model.*;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.textract.TextractClient;
+import software.amazon.awssdk.services.textract.model.AnalyzeIdRequest;
+import software.amazon.awssdk.services.textract.model.AnalyzeIdResponse;
+import software.amazon.awssdk.services.textract.model.Document;
+import software.amazon.awssdk.services.textract.model.IdentityDocument;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -189,4 +195,6 @@ public class AwsS3Service {
             throw new RuntimeException(e);
         }
     }
+
+
 }

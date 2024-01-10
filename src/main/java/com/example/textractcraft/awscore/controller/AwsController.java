@@ -1,8 +1,11 @@
 package com.example.textractcraft.awscore.controller;
 
+import com.example.textractcraft.awscore.dto.IdentityDocumentDto;
+import com.example.textractcraft.awscore.service.AwsAnalyzeIdService;
 import com.example.textractcraft.awscore.service.AwsS3Service;
 import com.example.textractcraft.awscore.service.AwsTextractService;
 import com.example.textractcraft.awscore.utils.JsonBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +19,7 @@ import software.amazon.awssdk.services.rekognition.model.FaceDetail;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.textract.model.IdentityDocument;
 import software.amazon.awssdk.services.textract.model.Query;
 
 import java.util.Comparator;
@@ -28,6 +32,7 @@ public class AwsController {
     private final AwsTextractService awsService;
 
     private final AwsS3Service awsS3Service;
+    private final AwsAnalyzeIdService analyzeIdService;
 
     private final JsonBuilder jsonBuilder = new JsonBuilder();
 
@@ -35,9 +40,10 @@ public class AwsController {
 
 
     @Autowired
-    public AwsController(AwsTextractService awsService, AwsS3Service awsS3Service) {
+    public AwsController(AwsTextractService awsService, AwsS3Service awsS3Service, AwsAnalyzeIdService analyzeIdService) {
         this.awsService = awsService;
         this.awsS3Service = awsS3Service;
+        this.analyzeIdService = analyzeIdService;
     }
 
     @GetMapping(value = "/awsSignatureExtractor", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -163,10 +169,19 @@ public class AwsController {
         }
     }
 
-    @PostMapping(value = "/awsDetectFace", produces = MediaType.ALL_VALUE)
+    @PostMapping(value = "/awsDetectFace", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<FaceDetail> recognizeFaceFromImage(@RequestParam String filePath) throws S3Exception {
         try {
             return awsS3Service.detectFacesRequest(filePath);
+        } catch (S3Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @PostMapping(value = "/awsAnalyzeId", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<IdentityDocumentDto> analyzeId(@RequestParam String filePath) throws S3Exception {
+        try {
+            return analyzeIdService.analyzeId(filePath);
         } catch (S3Exception e) {
             throw new RuntimeException(e);
         }

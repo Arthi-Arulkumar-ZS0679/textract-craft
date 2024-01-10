@@ -11,8 +11,10 @@ import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -62,6 +64,17 @@ public class FileUtils {
         } else {
             return originalFileName + "." + newExtension;
         }
+    }
+    public static String uploadDocumentToS3(S3Client s3Client, String s3Bucket, String localDocumentPath) {
+        File documentFile = new File(localDocumentPath);
+        String s3Key = documentFile.getName();
+
+        s3Client.putObject(PutObjectRequest.builder()
+                .bucket(s3Bucket)
+                .key(s3Key)
+                .build(), documentFile.toPath());
+
+        return s3Key;
     }
 
 }
