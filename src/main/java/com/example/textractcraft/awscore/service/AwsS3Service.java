@@ -196,42 +196,5 @@ public class AwsS3Service {
         }
     }
 
-    public String analyzeId(String filePath) {
-
-        String bucketName = applicationConfig.getAwsBucketName();
-        String accessKeyId = applicationConfig.getAwsAccessKeyId();
-        String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
-        String s3Bucket = "textract-console-us-east-1-d44828c7-0cff-4986-b6dd-f9e6970a4c0e";
-
-        Region region = Region.US_WEST_2;
-        S3Client s3Client = S3Client.builder()
-                .region(Region.US_EAST_1)
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
-                .build();
-        TextractExampleWithS3 textractExampleWithS3 = new TextractExampleWithS3();
-        String s3DocumentKey = textractExampleWithS3.uploadDocumentToS3(s3Client, bucketName, filePath);
-
-        TextractClient textractClient = TextractClient.builder()
-                .region(region)
-                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
-                .build();
-//        S3Object s3Object = S3Object.builder()
-//                .bucket(bucketName) // Specify the bucket name here
-//                .key(s3DocumentKey) // Specify the S3 object key here
-//                .build();
-
-//        Document myDoc = Document.builder()
-//                .s3Object(s3Object)
-//                .build();
-//        AnalyzeIdRequest analyzeIdRequest = AnalyzeIdRequest.builder()
-//                .documentPages(myDoc).build();
-
-//        AnalyzeIdResponse analyzeId = textractClient.analyzeID(analyzeIdRequest);
-//        List<IdentityDocument> Docs = analyzeId.identityDocuments();
-//        for (IdentityDocument doc: Docs) {
-//            System.out.println(doc);
-//        }
-        return "";
-    }
 
 }
