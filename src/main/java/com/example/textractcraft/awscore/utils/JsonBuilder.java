@@ -61,6 +61,74 @@ public class JsonBuilder {
         return jsonResponse;
     }
 
+    public String buildJson(List<Block> allBlocks) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(Geometry.class, new GeometrySerializer());
+        objectMapper.registerModule(module);
+
+        // Map of blockId → block for lookup
+        Map<String, Block> blockMap = allBlocks.stream()
+                .collect(Collectors.toMap(Block::id, b -> b));
+
+        List<Map<String, String>> keyValuePairs = new ArrayList<>();
+
+        for (Block block : allBlocks) {
+            if (block.blockType().equals(BlockType.KEY_VALUE_SET)) {
+                // Extract key text
+                String keyText = extractText(block, blockMap);
+                String valueText = "";
+
+                // Get VALUE block linked to this KEY
+                if (block.relationships() != null) {
+                    for (Relationship rel : block.relationships()) {
+                        if (rel.type() == RelationshipType.VALUE) {
+                            for (String valueId : rel.ids()) {
+                                Block valueBlock = blockMap.get(valueId);
+                                if (valueBlock != null) {
+                                    valueText = extractText(valueBlock, blockMap);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!keyText.isEmpty()) {
+                    Map<String, String> pair = new HashMap<>();
+                    pair.put("key", keyText);
+                    pair.put("value", valueText);
+                    keyValuePairs.add(pair);
+                }
+            }
+        }
+
+        try {
+            return objectMapper.writeValueAsString(keyValuePairs);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error serializing JSON", e);
+        }
+    }
+
+    /**
+     * Extracts text from WORD children of a block.
+     */
+    private String extractText(Block block, Map<String, Block> blockMap) {
+        StringBuilder text = new StringBuilder();
+        if (block.relationships() != null) {
+            for (Relationship rel : block.relationships()) {
+                if (rel.type() == RelationshipType.CHILD) {
+                    for (String childId : rel.ids()) {
+                        Block child = blockMap.get(childId);
+                        if (child != null && child.text() != null) {
+                            text.append(child.text()).append(" ");
+                        }
+                    }
+                }
+            }
+        }
+        return text.toString().trim();
+    }
+
     private Map<String, Object> buildSignatureJson(Block block) {
         Map<String, Object> signatureJson = new HashMap<>();
         signatureJson.put("BlockType", block.blockType().toString());

@@ -68,11 +68,27 @@ public class AwsTextractService {
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
-        TextractClient textractClient = TextractClient.builder().region(region).credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKeyId, secretAccessKey))).build();
+
+        TextractClient textractClient = TextractClient.builder()
+                .region(region)
+                .credentialsProvider(
+                        StaticCredentialsProvider.create(
+                                AwsBasicCredentials.create(accessKeyId, secretAccessKey)))
+                .build();
+
         try (InputStream inputStream = new FileInputStream(filePath)) {
-            Document document = Document.builder().bytes(SdkBytes.fromInputStream(inputStream)).build();
-            AnalyzeDocumentResponse response = textractClient.analyzeDocument(AnalyzeDocumentRequest.builder().document(document).featureTypes(FeatureType.FORMS).build());
-            return jsonBuilder.buildJson(response.blocks(), BlockType.LINE);
+            Document document = Document.builder()
+                    .bytes(SdkBytes.fromInputStream(inputStream))
+                    .build();
+
+            AnalyzeDocumentResponse response = textractClient.analyzeDocument(
+                    AnalyzeDocumentRequest.builder()
+                            .document(document)
+                            .featureTypes(FeatureType.FORMS)
+                            .build());
+
+            return jsonBuilder.buildJson(response.blocks());
+
         } catch (TextractException | IOException e) {
             logger.error("Runtime exception occurred in form extraction {}", e.getMessage());
             throw new RuntimeException(e);
