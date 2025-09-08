@@ -18,6 +18,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -64,7 +65,7 @@ public class AwsTextractService {
         }
     }
 
-    public String formExtractor(String filePath) throws TextractException {
+    public String formExtractor(String filePath, Map<String, Object> jsonMap) throws TextractException {
         Region region = applicationConfig.getAwsRegion();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
         String secretAccessKey = applicationConfig.getAwsSecretAccessKey();
@@ -87,7 +88,7 @@ public class AwsTextractService {
                             .featureTypes(FeatureType.FORMS)
                             .build());
 
-            return jsonBuilder.buildJson(response.blocks());
+            return jsonBuilder.buildJson(response.blocks(),jsonMap);
 
         } catch (TextractException | IOException e) {
             logger.error("Runtime exception occurred in form extraction {}", e.getMessage());

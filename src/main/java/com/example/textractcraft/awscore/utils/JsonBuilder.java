@@ -61,7 +61,7 @@ public class JsonBuilder {
         return jsonResponse;
     }
 
-    public String buildJson(List<Block> allBlocks) {
+    public String buildJson(List<Block> allBlocks, Map<String, Object> jsonMap) {
         ObjectMapper objectMapper = new ObjectMapper();
         SimpleModule module = new SimpleModule();
         module.addSerializer(Geometry.class, new GeometrySerializer());
@@ -71,15 +71,14 @@ public class JsonBuilder {
         Map<String, Block> blockMap = allBlocks.stream()
                 .collect(Collectors.toMap(Block::id, b -> b));
 
-        List<Map<String, String>> keyValuePairs = new ArrayList<>();
+        // Collect key-value pairs
+        Map<String, Object> flatKeyValueMap = new LinkedHashMap<>();
 
         for (Block block : allBlocks) {
             if (block.blockType().equals(BlockType.KEY_VALUE_SET)) {
-                // Extract key text
                 String keyText = extractText(block, blockMap);
                 String valueText = "";
 
-                // Get VALUE block linked to this KEY
                 if (block.relationships() != null) {
                     for (Relationship rel : block.relationships()) {
                         if (rel.type() == RelationshipType.VALUE) {
@@ -94,20 +93,60 @@ public class JsonBuilder {
                 }
 
                 if (!keyText.isEmpty()) {
-                    Map<String, String> pair = new HashMap<>();
-                    pair.put("key", keyText);
-                    pair.put("value", valueText);
-                    keyValuePairs.add(pair);
+                    flatKeyValueMap.put(keyText, valueText);
+                    flatKeyValueMap.put("confidenceScore",80);
                 }
             }
         }
 
         try {
-            return objectMapper.writeValueAsString(keyValuePairs);
-        } catch (JsonProcessingException e) {
+
+            // Build the payload that will go into outputs.data[0]
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("processName", "DATA_EXTRACTION");
+            payload.put("model", "AWS-TEXTRACT");
+            payload.put("infer_response", flatKeyValueMap.toString()); // flatten map into string
+            payload.put("base64Img", jsonMap.get("base64Img"));
+            payload.put("originId", jsonMap.get("originId"));
+            payload.put("paperNo", jsonMap.get("paperNo"));
+            payload.put("processId", jsonMap.get("processId"));
+            payload.put("groupId", jsonMap.get("groupId"));
+            payload.put("tenantId", jsonMap.get("tenantId"));
+            payload.put("rootPipelineId", jsonMap.get("rootPipelineId"));
+            payload.put("actionId", jsonMap.get("actionId"));
+            payload.put("batchId", jsonMap.get("batchId"));
+            payload.put("imageDPI", 72);
+            payload.put("imageWidth", 2550);
+            payload.put("imageHeight", 3299);
+            payload.put("extractedImageUnit", "pixels");
+
+            // Serialize payload into JSON string
+            String payloadJson = objectMapper.writeValueAsString(payload);
+
+            // Build RadonKvpOutput
+            Map<String, Object> output = new LinkedHashMap<>();
+            output.put("name", "AWS END");
+            output.put("datatype", "BYTES");
+            output.put("shape", Collections.singletonList(1));
+            output.put("data", Collections.singletonList(payloadJson));
+
+            // Wrap into RadonKvpExtractionResponse JSON structure
+            Map<String, Object> responseWrapper = new LinkedHashMap<>();
+            responseWrapper.put("model_name", "aws-model");
+            responseWrapper.put("model_version", "1.0");
+            responseWrapper.put("statusCode", 200);
+            responseWrapper.put("errorMessage", "");
+            responseWrapper.put("detail", "success");
+            responseWrapper.put("outputs", Collections.singletonList(output));
+
+            return objectMapper.writeValueAsString(responseWrapper);
+
+        } catch (Exception e) {
             throw new RuntimeException("Error serializing JSON", e);
         }
     }
+
+
 
     /**
      * Extracts text from WORD children of a block.

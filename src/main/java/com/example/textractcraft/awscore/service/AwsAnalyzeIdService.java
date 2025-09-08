@@ -1,3 +1,4 @@
+/*
 package com.example.textractcraft.awscore.service;
 
 import com.example.textractcraft.awscore.dto.IdentityDocumentDto;
@@ -29,7 +30,7 @@ public class AwsAnalyzeIdService {
     private final JsonBuilder jsonBuilder = new JsonBuilder();
 
 
-    public List<IdentityDocumentDto> analyzeId(String filePath) {
+    public List<com.example.textractcraft.awscore.service.IdentityDocumentDto> analyzeId(String filePath) {
 
         String bucketName = applicationConfig.getAwsBucketName();
         String accessKeyId = applicationConfig.getAwsAccessKeyId();
@@ -75,3 +76,4 @@ public class AwsAnalyzeIdService {
     }
 
 }
+*/

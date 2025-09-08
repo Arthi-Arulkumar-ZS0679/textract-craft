@@ -1,11 +1,10 @@
 package com.example.textractcraft.awscore.controller;
 
-import com.example.textractcraft.awscore.dto.IdentityDocumentDto;
-import com.example.textractcraft.awscore.service.AwsAnalyzeIdService;
 import com.example.textractcraft.awscore.service.AwsS3Service;
 import com.example.textractcraft.awscore.service.AwsTextractService;
 import com.example.textractcraft.awscore.utils.JsonBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,9 @@ import software.amazon.awssdk.services.textract.model.IdentityDocument;
 import software.amazon.awssdk.services.textract.model.Query;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -32,7 +33,7 @@ public class AwsController {
     private final AwsTextractService awsService;
 
     private final AwsS3Service awsS3Service;
-    private final AwsAnalyzeIdService analyzeIdService;
+    //private final AwsAnalyzeIdService analyzeIdService;
 
     private final JsonBuilder jsonBuilder = new JsonBuilder();
 
@@ -40,10 +41,9 @@ public class AwsController {
 
 
     @Autowired
-    public AwsController(AwsTextractService awsService, AwsS3Service awsS3Service, AwsAnalyzeIdService analyzeIdService) {
+    public AwsController(AwsTextractService awsService, AwsS3Service awsS3Service) {
         this.awsService = awsService;
         this.awsS3Service = awsS3Service;
-        this.analyzeIdService = analyzeIdService;
     }
 
     @GetMapping(value = "/awsSignatureExtractor", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -68,10 +68,42 @@ public class AwsController {
         }
     }
 
-    @GetMapping(value = "/awsFormExtractor", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<String> formExtractor(@RequestParam String filePath) {
+    @PostMapping(value = "/awsFormExtractor")
+    public ResponseEntity<String> formExtractor(@RequestBody Map<String, Object> requestBody) {
         try {
-            String response = awsService.formExtractor(filePath);
+            List<Map<String, Object>> inputs = (List<Map<String, Object>>) requestBody.get("inputs");
+
+            Map<String, Object> firstInput = inputs.get(0);
+            List<Object> dataList = (List<Object>) firstInput.get("data");
+
+            System.out.println("dataList.get(0) class = " + dataList.get(0).getClass());
+
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> jsonMap = mapper.readValue(dataList.get(0).toString(), Map.class);
+
+            String inputFilePath = (String) jsonMap.get("inputFilePath");
+            System.out.println("inputFilePath = " + inputFilePath);
+
+
+
+            String response = awsService.formExtractor(inputFilePath,jsonMap);
+            logger.info("\n*********************Form Extraction Successfully***********************\n {}", response);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @GetMapping(value = "/awsFormExtractor",produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> formExtractor(@RequestParam String inputFilePath) {
+        try {
+
+
+            Map<String, Object> jsonMap = new HashMap<>();
+
+
+
+            String response = awsService.formExtractor(inputFilePath,jsonMap);
             logger.info("\n*********************Form Extraction Successfully***********************\n {}", response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -178,13 +210,13 @@ public class AwsController {
         }
     }
 
-    @PostMapping(value = "/awsAnalyzeId", produces = MediaType.APPLICATION_JSON_VALUE)
+    /*@PostMapping(value = "/awsAnalyzeId", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<IdentityDocumentDto> analyzeId(@RequestParam String filePath) throws S3Exception {
         try {
             return analyzeIdService.analyzeId(filePath);
         } catch (S3Exception e) {
             throw new RuntimeException(e);
         }
-    }
+    }*/
 }
 
